@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Google AI Studio App</title>
+    <script>
+      // Polyfill for libraries that expect 'process' to be defined
+      window.process = window.process || {
+        env: {
+          NODE_ENV: 'development'
+        }
+      };
+      
+      if (typeof global === 'undefined') {
+        window.global = window;
+      }
+
+      // Protection for readonly properties like 'fetch'
+      const originalFetch = window.fetch;
+      try {
+        Object.defineProperty(window, 'fetch', {
+          get: () => originalFetch,
+          set: () => { console.warn('Attempted to override read-only fetch property'); },
+          configurable: true
+        });
+      } catch (e) {
+        console.warn('Could not define property fetch:', e);
+      }
+      
+      // Global error tracker
+      window.addEventListener('error', function(event) {
+        if (event.error && event.error.name === 'SyntaxError') {
+          console.error('CRITICAL SYNTAX ERROR DETECTED:', event.error.message);
+          console.error('Stack:', event.error.stack);
+        }
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-8hiuJZqA.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D5ri1bN0.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
