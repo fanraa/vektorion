@@ -370,6 +370,21 @@ async function startServer() {
       });
       app.use(vite.middlewares);
       console.log("[VITE_SUCCESS] Vite middleware integrated.");
+      app.get("*", async (req, res, next) => {
+        const url = req.originalUrl;
+        try {
+          const rawTemplatePath = import_path.default.join(process.cwd(), "index.html");
+          if (!import_fs.default.existsSync(rawTemplatePath)) {
+            return res.status(404).send("Root index.html not found.");
+          }
+          let template = import_fs.default.readFileSync(rawTemplatePath, "utf-8");
+          template = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        } catch (e) {
+          vite.ssrFixStacktrace(e);
+          next(e);
+        }
+      });
     } catch (viteError) {
       console.error("[VITE_ERROR] Failed to start Vite:", viteError);
     }
@@ -379,7 +394,7 @@ async function startServer() {
     app.get("*", async (req, res) => {
       const idxPath = import_path.default.join(distPath, "index.html");
       if (!import_fs.default.existsSync(idxPath)) {
-        return res.sendFile(idxPath);
+        return res.status(404).send("Production build index.html not found. Please build the application.");
       }
       try {
         let html = import_fs.default.readFileSync(idxPath, "utf8");
