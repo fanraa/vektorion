@@ -376,8 +376,44 @@ async function startServer() {
   } else {
     const distPath = import_path.default.join(process.cwd(), "dist");
     app.use(import_express.default.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(import_path.default.join(distPath, "index.html"));
+    app.get("*", async (req, res) => {
+      const idxPath = import_path.default.join(distPath, "index.html");
+      if (!import_fs.default.existsSync(idxPath)) {
+        return res.sendFile(idxPath);
+      }
+      try {
+        let html = import_fs.default.readFileSync(idxPath, "utf8");
+        const photoId = req.query.id;
+        let title = "Vektorion";
+        let image = "https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png";
+        let description = "Physics ITERA 2025 - Vektorion";
+        const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+        const host = req.headers["host"] || req.get("host") || "vektorion.vercel.app";
+        const shareUrl = `${protocol}://${host}${req.originalUrl}`;
+        if (photoId) {
+          try {
+            console.log(`[SEO_LOOKUP] Searching details for photo ID: ${photoId}...`);
+            const docSnap = await dbAdmin.collection("gallery").doc(photoId).get();
+            if (docSnap.exists) {
+              const data = docSnap.data();
+              title = data?.title ? `${data.title} - Vektorion` : "Momen Vektorion";
+              image = data?.url || image;
+              description = data?.description || "Lihat keseruan momen angkatan kami di Galeri Vektorion.";
+              console.log(`[SEO_LOOKUP] Found record! Title: "${title}", Image: ${image.substring(0, 40)}...`);
+            } else {
+              console.log(`[SEO_LOOKUP] Document ID ${photoId} not found in gallery collection.`);
+            }
+          } catch (dbErr) {
+            console.error("[SEO_DB_ERR] Failed to fetch gallery item from Firestore Admin:", dbErr.message);
+          }
+        }
+        html = html.replace(/<title>.*?<\/title>/gi, `<title>${title}</title>`).replace(/<meta property="og:title" content=".*?" \/>/gi, `<meta property="og:title" content="${title}" />`).replace(/<meta property="og:image" content=".*?" \/>/gi, `<meta property="og:image" content="${image}" />`).replace(/<meta property="og:description" content=".*?" \/>/gi, `<meta property="og:description" content="${description}" />`).replace(/<meta property="og:url" content=".*?" \/>/gi, `<meta property="og:url" content="${shareUrl}" />`).replace(/<meta property="twitter:title" content=".*?" \/>/gi, `<meta property="twitter:title" content="${title}" />`).replace(/<meta property="twitter:image" content=".*?" \/>/gi, `<meta property="twitter:image" content="${image}" />`).replace(/<meta property="twitter:description" content=".*?" \/>/gi, `<meta property="twitter:description" content="${description}" />`).replace(/<meta property="twitter:url" content=".*?" \/>/gi, `<meta property="twitter:url" content="${shareUrl}" />`).replace(/<meta name="description" content=".*?" \/>/gi, `<meta name="description" content="${description}" />`);
+        res.setHeader("Content-Type", "text/html");
+        res.send(html);
+      } catch (err) {
+        console.error("[SEO_MIDDLEWARE_ERR] Error processing SEO HTML:", err);
+        res.sendFile(idxPath);
+      }
     });
   }
   app.listen(PORT, "0.0.0.0", () => {
