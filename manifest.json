@@ -1,0 +1,18 @@
+{
+  "short_name": "Vektorion",
+  "name": "Vektorion Physics ITERA 2025",
+  "description": "Portal Resmi Angkatan Fisika ITERA 2025 - Vektorion",
+  "icons": [
+    {
+      "src": "https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/home",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "display": "standalone",
+  "orientation": "portrait"
+}

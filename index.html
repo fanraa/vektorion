@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vektorion</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#f59e0b" />
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Physics ITERA 2025 - Vektorion" />
@@ -55,11 +58,20 @@
         }
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-BCeRNBnm.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-B5Dl5IZE.css">
+    <script type="module" crossorigin src="/assets/index-BUF5UAQn.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CQxNyey9.css">
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+            .catch(err => console.error('Service Worker registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>
 
