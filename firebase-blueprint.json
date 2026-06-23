@@ -1,0 +1,286 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "Mahasiswa Fisika 2025",
+      "type": "object",
+      "properties": {
+        "nim": { "type": "string", "description": "Nomor Induk Mahasiswa" },
+        "name": { "type": "string", "description": "Nama Lengkap" }
+      },
+      "required": ["nim", "name"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Catatan arus kas angkatan",
+      "type": "object",
+      "properties": {
+        "nim": { "type": "string", "description": "NIM terkait (jika ada)" },
+        "name": { "type": "string", "description": "Nama pengirim/keterangan" },
+        "amount": { "type": "number", "description": "Jumlah uang" },
+        "date": { "type": "string", "description": "Tanggal transaksi format DD Bulan YYYY" },
+        "time": { "type": "string", "description": "Waktu transaksi format HH:mm" },
+        "tag": { "type": "string", "description": "Label transaksi (Kas Mei, Ops, dll)" },
+        "status": { 
+          "type": "string", 
+          "enum": ["verified", "pending", "suspicious", "out"],
+          "description": "Status verifikasi"
+        },
+        "proofUrl": { "type": "string", "description": "URL bukti transfer" },
+        "warning": { "type": "string", "description": "Pesan peringatan jika ada" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Waktu server dibuat" }
+      },
+      "required": ["name", "amount", "date", "time", "tag", "status", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Profil pengguna sistem",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "nim": { "type": "string" },
+        "name": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
+        "position": { "type": "string" },
+        "galleryDensity": { "type": "string", "enum": ["normal", "compact"] }
+      },
+      "required": ["uid", "nim", "name", "role", "isAdmin"]
+    },
+    "MemberKas": {
+      "title": "MemberKas",
+      "description": "Data iuran kas anggota per tahun",
+      "type": "object",
+      "properties": {
+        "no": { "type": "number" },
+        "nama": { "type": "string" },
+        "nim": { "type": "string" },
+        "tahun": { "type": "string" },
+        "payments": { 
+          "type": "object",
+          "description": "Map of months to weeks payment status"
+        },
+        "totalLunas": { "type": "number" },
+        "totalTagihan": { "type": "number" },
+        "totalTunggak": { "type": "number" },
+        "status": { "type": "string" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nama", "nim", "tahun", "payments", "totalLunas", "totalTagihan", "totalTunggak", "status"]
+    },
+    "TreasurySummary": {
+      "title": "TreasurySummary",
+      "description": "Ringkasan keuangan (Saldo, Pemasukan, Pengeluaran)",
+      "type": "object",
+      "properties": {
+        "totalPemasukan": { "type": "number" },
+        "totalPengeluaran": { "type": "number" },
+        "saldo": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["totalPemasukan", "totalPengeluaran", "saldo"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Foto galeri angkatan",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "uploadedBy": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "size": { "type": "string" }
+      },
+      "required": ["url", "title", "category", "date", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Pesan aspirasi dari pengguna",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "targetRecipient": { "type": "string", "description": "Email penerima pesan aspirasi" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Waktu server dibuat" }
+      },
+      "required": ["email", "message", "targetRecipient", "createdAt"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "Konfigurasi aplikasi",
+      "type": "object",
+      "properties": {
+        "heroBg": { "type": "string" },
+        "heroSlideshow": { "type": "boolean" },
+        "heroInterval": { "type": "number" },
+        "agendaBg": { "type": "string" },
+        "agendaSlideshow": { "type": "boolean" },
+        "agendaInterval": { "type": "number" },
+        "footerBg": { "type": "string" },
+        "footerSlideshow": { "type": "boolean" },
+        "footerInterval": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BackgroundAsset": {
+      "title": "BackgroundAsset",
+      "description": "Aset gambar latar belakang",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Informasi atau pengumuman angkatan",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "shortDesc": { "type": "string" },
+        "fullDesc": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "date", "fullDesc", "createdAt"]
+    },
+    "FooterConfig": {
+      "title": "FooterConfig",
+      "description": "Konfigurasi teks footer",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "copyright": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Agenda": {
+      "title": "Agenda",
+      "description": "Agenda dan kegiatan angkatan",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "description": { "type": "string" },
+        "author": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "date", "description", "authorId", "createdAt"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Pengaturan sistem (API Keys & Menu Locks)",
+      "type": "object",
+      "properties": {
+        "apiKeys": { "type": "object", "description": "Map of provider to API Key" },
+        "lockedMenus": { "type": "object", "description": "Map of menuId to lock status" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SystemLog": {
+      "title": "SystemLog",
+      "description": "Log kesehatan sistem dan API",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["info", "error"] },
+        "provider": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "message", "timestamp"]
+    }
+  },
+  "firestore": {
+    "members": {
+      "schema": "Member",
+      "description": "Kumpulan anggota angkatan"
+    },
+    "announcements": {
+      "schema": "Announcement",
+      "description": "Kumpulan pengumuman angkatan"
+    },
+    "agendas": {
+      "schema": "Agenda",
+      "description": "Kumpulan agenda dan kegiatan angkatan"
+    },
+    "footerConfigs": {
+      "schema": "FooterConfig",
+      "description": "Konfigurasi footer di layout"
+    },
+    "messages": {
+      "schema": "Message",
+      "description": "Kumpulan pesan aspirasi"
+    },
+    "transactions": {
+      "schema": "Transaction",
+      "description": "Kumpulan riwayat transaksi keuangan"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Kumpulan profil pengguna"
+    },
+    "gallery": {
+      "schema": "GalleryItem",
+      "description": "Kumpulan foto momen angkatan"
+    },
+    "v2_kas_data/{tahun}/members/{nim}": {
+      "schema": "MemberKas",
+      "description": "Data iuran kas per anggota per tahun (V2)"
+    },
+    "v2_kas_summary/{year}": {
+      "schema": "TreasurySummary",
+      "description": "Ringkasan keuangan per tahun (V2)"
+    },
+    "v2_kas_expenses/{docId}": {
+      "title": "ExpenseItemV2",
+      "description": "Detail pengeluaran kas (V2)"
+    },
+    "v2_kas_former/{docId}": {
+      "title": "FormerMemberItemV2",
+      "description": "Detail iuran anggota yang sudah keluar (V2)"
+    },
+    "v2_kas_activity/{docId}": {
+      "title": "ActivityItemV2",
+      "description": "Log aktivitas iuran kas (V2)"
+    },
+    "v2_kas_transactions": {
+      "schema": "Transaction",
+      "description": "Riwayat transaksi V2"
+    },
+    "appConfig/homeBackgrounds": {
+      "schema": "AppConfig",
+      "description": "Konfigurasi gambar latar belakang Home"
+    },
+    "backgroundAssets": {
+      "schema": "BackgroundAsset",
+      "description": "Galeri aset latar belakang yang diunggah"
+    },
+    "appConfig/systemSettings": {
+      "schema": "SystemSettings",
+      "description": "Pengaturan kunci menu dan API Keys"
+    },
+    "systemLogs": {
+      "schema": "SystemLog",
+      "description": "Log riwayat error dan kesehatan sistem"
+    }
+  }
+}

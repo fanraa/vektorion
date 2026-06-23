@@ -1,0 +1,273 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Primitive Helpers (Pillar 3 & 4)
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && 
+             request.auth.token.keys().contains('email_verified') &&
+             request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email.lower() == "irfanrizkiaditri@gmail.com" ||
+         request.auth.token.email.lower() == "irfanrizkiaditricreator@gmail.com" ||
+         request.auth.token.email.lower() == "irfanrizkiaditribusiness@gmail.com" ||
+         request.auth.token.email.lower() == "irfan125110007@vektorion.io" ||
+         request.auth.token.email.lower() == "admin@vektorion.com" ||
+         request.auth.token.email.lower() == "admin.system@vektorion.io") ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSafeUserUpdate() {
+      // Disallow regular users from making themselves admins or changing their roles
+      // galleryDensity is explicitly allowed.
+      return isAdmin() || !incoming().diff(existing()).affectedKeys()
+        .hasAny(['isAdmin', 'role', 'credits', 'premium', 'email']);
+    }
+
+    function isSafeUserCreate() {
+      // Allow creation if fields are default OR if user is a known admin
+      return isAdmin() || (
+        incoming().role == 'Anggota' && 
+        incoming().isAdmin == false &&
+        !incoming().keys().hasAny(['credits', 'premium'])
+      );
+    }
+
+    // 2. Validation Blueprints (Pillar 2)
+    
+    function isValidMessage(data) {
+      return data.keys().hasAll(['email', 'message', 'targetRecipient', 'createdAt']) &&
+             data.email is string && data.email.size() <= 200 &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.targetRecipient == "irfanrizkiaditricreator@gmail.com" &&
+             data.createdAt == request.time;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['url', 'title', 'category', 'date', 'createdAt', 'userId']) &&
+             data.url is string && data.url.size() <= 2000000 && 
+             data.title is string && data.title.size() <= 500 &&
+             data.userId == request.auth.uid &&
+             data.createdAt == request.time;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['name', 'amount', 'date', 'time', 'tag', 'status', 'createdAt']) &&
+             data.amount is number;
+    }
+
+    function isValidAppConfig(data) {
+      return data.keys().hasAll(['updatedAt', 'heroBg', 'agendaBg', 'footerBg']) &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidBackgroundAsset(data) {
+      return data.keys().hasAll(['url', 'name', 'createdAt']) &&
+             data.url is string && data.url.size() <= 1500 &&
+             data.name is string && data.name.size() <= 500 &&
+             data.createdAt == request.time;
+    }
+
+    function isValidAnnouncement(data, isUpdate) {
+      return data.keys().hasAll(['title', 'category', 'date', 'fullDesc']) &&
+             data.title is string && data.title.size() <= 500 &&
+             data.fullDesc is string && data.fullDesc.size() <= 20000 &&
+             (isUpdate ? 
+               (data.createdAt == existing().createdAt && data.updatedAt == request.time) : 
+               (data.keys().contains('createdAt') && data.createdAt == request.time)) &&
+             (!data.keys().contains('shortDesc') || (data.shortDesc is string && data.shortDesc.size() <= 5000)) &&
+             (!data.keys().contains('imageUrl') || (data.imageUrl is string && data.imageUrl.size() <= 1000000));
+    }
+
+    function isValidFooterConfig(data) {
+      return data.keys().hasAll(['title', 'subtitle', 'copyright', 'updatedAt']) &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidAgenda(data) {
+      return data.keys().hasAll(['title', 'date', 'description', 'authorId', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.date is string && data.date.size() <= 100 &&
+             data.description is string && data.description.size() <= 3000 &&
+             data.authorId == request.auth.uid &&
+             data.createdAt == request.time;
+    }
+
+    // 3. Collection Rules
+    
+    match /agendas/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(id) && isValidAgenda(incoming());
+      allow update: if isSignedIn() && (isAdmin() || resource.data.authorId == request.auth.uid) && 
+                    (incoming().authorId == existing().authorId);
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.authorId == request.auth.uid);
+    }
+
+    match /announcements/{id} {
+      allow read, list: if true;
+      allow create: if isAdmin() && isValidAnnouncement(incoming(), false);
+      allow update: if isAdmin() && isValidAnnouncement(incoming(), true);
+      allow delete: if isAdmin();
+    }
+
+    match /footerConfigs/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidId(id);
+    }
+
+    match /admins/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false; 
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(userId) &&
+                    isSafeUserCreate();
+      allow update: if isSignedIn() && request.auth.uid == userId && isSafeUserUpdate();
+      allow delete: if isAdmin();
+    }
+
+    match /members/{nim} {
+      allow read, list: if true; 
+      allow write: if isAdmin() && isValidId(nim);
+    }
+
+    match /transactions/{txId} {
+      allow read, list: if true; 
+      allow create, update, delete: if isAdmin() && isValidId(txId);
+    }
+
+    match /v2_kas_transactions/{txId} {
+      allow read, list: if true; 
+      allow create, update, delete: if isAdmin() && isValidId(txId);
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+
+    match /kasData/{tahun} {
+      allow read, list: if true;
+      match /members/{nim} {
+        allow read, list: if true;
+        allow write: if isAdmin(); 
+      }
+    }
+
+    match /v2_kas_data/{tahun}/{document=**} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /kasSummary/{year} {
+      allow read, list: if true;
+      allow write: if isAdmin(); 
+    }
+
+    match /v2_kas_summary/{year} {
+      allow read, list: if true;
+      allow write: if isAdmin(); 
+    }
+
+    match /kasExpenses/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /v2_kas_expenses/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /kasFormerMembers/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /v2_kas_former/{docId} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /gallery/{itemId} {
+      allow read, list: if true;
+      allow create: if isSignedIn() && isValidId(itemId) && isValidGalleryItem(incoming());
+      allow update: if isAdmin();
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    match /messages/{messageId} {
+      allow create: if isValidMessage(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /kasActivity/{document=**} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /v2_kas_activity/{document=**} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /appConfig/homeBackgrounds {
+      allow read: if true;
+      allow write: if isAdmin() && isValidAppConfig(incoming());
+    }
+
+    match /backgroundAssets/{assetId} {
+      allow read, list: if true;
+      allow create: if isAdmin() && isValidId(assetId) && isValidBackgroundAsset(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /appConfig/systemSettings {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /systemLogs/{logId} {
+      allow read, list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /notifications/{id} {
+      allow read, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /struktur_organisasi/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
