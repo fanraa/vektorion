@@ -73,10 +73,14 @@ async function startServer() {
     await dbAdmin.collection("test").limit(1).get();
     console.log("[FIREBASE] Firestore connection verified.");
   } catch (testError: any) {
-    console.error(
-      `[FIREBASE] Firestore check FAILED [Project: ${projectId}]:`,
-      testError.message,
-    );
+    if (testError?.code !== 5 && !testError?.message?.includes("NOT_FOUND")) {
+      console.error(
+        `[FIREBASE] Firestore check FAILED [Project: ${projectId}]:`,
+        testError.message,
+      );
+    } else {
+      console.log(`[FIREBASE] Firestore Database might not be initialized yet, or using default config.`);
+    }
   }
 
   const app = express();
@@ -168,42 +172,46 @@ async function startServer() {
   }
 
   // Helper: Get AI Instances to try (Fallback mechanism)
-  async function getAIProvidersList() {
+  async function getAIProvidersList(clientKeys?: Record<string, string>, clientActiveProvider?: string) {
     let providers: { provider: string; apiKey: string }[] = [];
+    let keys = clientKeys || {};
+    let activeProvider = clientActiveProvider || "Google (Gemini)";
 
     try {
-      const snap = await dbAdmin
-        .collection("appConfig")
-        .doc("systemSettings")
-        .get();
-      if (snap.exists) {
-        const data = snap.data();
-        const activeProvider = data?.activeAIProvider || "Google (Gemini)";
-        const keys = data?.apiKeys || {};
-
-        // Push active provider first if available
-        if (keys[activeProvider] && keys[activeProvider].length > 10) {
-          providers.push({
-            provider: activeProvider,
-            apiKey: keys[activeProvider],
-          });
-        }
-
-        // Push others
-        for (const [prov, key] of Object.entries(keys)) {
-          if (
-            prov !== activeProvider &&
-            typeof key === "string" &&
-            key.length > 10
-          ) {
-            providers.push({ provider: prov, apiKey: key });
-          }
+      if (clientKeys === undefined) {
+        const snap = await dbAdmin
+          .collection("appConfig")
+          .doc("systemSettings")
+          .get();
+        if (snap.exists) {
+          const data = snap.data();
+          activeProvider = data?.activeAIProvider || "Google (Gemini)";
+          keys = data?.apiKeys || {};
         }
       }
     } catch (e) {
       console.warn(
         "[AI_INIT] Failed to fetch DB settings, using Environment defaults",
       );
+    }
+
+    // Push active provider first if available
+    if (keys[activeProvider] && keys[activeProvider].length > 10) {
+      providers.push({
+        provider: activeProvider,
+        apiKey: keys[activeProvider],
+      });
+    }
+
+    // Push others
+    for (const [prov, key] of Object.entries(keys)) {
+      if (
+        prov !== activeProvider &&
+        typeof key === "string" &&
+        key.length > 10
+      ) {
+        providers.push({ provider: prov, apiKey: key });
+      }
     }
 
     // Secondary Check: Environment variables
@@ -246,8 +254,10 @@ async function startServer() {
     prompt: string,
     imageBase64?: string,
     mimeType?: string,
+    clientKeys?: Record<string, string>,
+    clientActiveProvider?: string,
   ): Promise<AIResponse> {
-    const providers = await getAIProvidersList();
+    const providers = await getAIProvidersList(clientKeys, clientActiveProvider);
 
     if (providers.length === 0) {
       throw new Error(
@@ -278,7 +288,7 @@ async function startServer() {
           }
 
           const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages,
             response_format: { type: "json_object" },
           });
@@ -339,7 +349,7 @@ async function startServer() {
           }
 
           const response = await genAI.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             contents: parts,
           });
           return { text: response.text || "" };
@@ -375,11 +385,14 @@ async function startServer() {
         message,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
-    } catch (e) {
-      console.error(
-        "Log failed (Firestore Write Error):",
-        e instanceof Error ? e.message : e,
-      );
+    } catch (e: any) {
+      // Suppress NOT_FOUND errors due to missing DB initialization
+      if (e?.code !== 5 && !e?.message?.includes("NOT_FOUND")) {
+        console.error(
+          "Log failed (Firestore Write Error):",
+          e instanceof Error ? e.message : e,
+        );
+      }
     }
   }
 
@@ -394,7 +407,7 @@ async function startServer() {
       if (provider === "Google (Gemini)") {
         const ai = new GoogleGenAI({ apiKey });
         await ai.models.generateContent({
-          model: "gemini-1.5-flash",
+          model: "gemini-2.5-flash",
           contents: "Hello",
         });
         return res.json({ success: true });
@@ -461,7 +474,7 @@ async function startServer() {
   // API Route: AI Caption Generation for Gallery
   app.post("/api/ai/generate-caption", async (req, res) => {
     try {
-      const { image, mimeType } = req.body;
+      const { image, mimeType, apiKeys, activeProvider } = req.body;
       if (!image || !mimeType) {
         return res
           .status(400)
@@ -470,9 +483,10 @@ async function startServer() {
 
       const prompt = `Analisis gambar ini dan buatkan caption yang menarik untuk galeri angkatan kuliah. 
                      Berikan respons dalam format JSON: { "title": "Judul Singkat", "description": "Deskripsi menarik" }.
+                     PENTING: Panjang "title" maksimal 15 huruf. Panjang "description" maksimal 100 huruf.
                      Gunakan Bahasa Indonesia yang santai tapi sopan.`;
 
-      const result = await generateWithAI(prompt, image, mimeType);
+      const result = await generateWithAI(prompt, image, mimeType, apiKeys, activeProvider);
       let text = result.text;
 
       // Clean up JSON response
@@ -711,6 +725,81 @@ async function startServer() {
           }
           let template = fs.readFileSync(rawTemplatePath, "utf-8");
           template = await vite.transformIndexHtml(url, template);
+
+          const photoId = req.query.id as string;
+          let title = "Vektorion";
+          let image =
+            "https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png";
+          let description = "Physics ITERA 2025 - Vektorion";
+          const protocol =
+            req.headers["x-forwarded-proto"] || req.protocol || "https";
+          const host =
+            req.headers["host"] || req.get("host") || "vektorion.vercel.app";
+          const shareUrl = `${protocol}://${host}${req.originalUrl}`;
+
+          if (photoId) {
+            try {
+              const docSnap = await dbAdmin
+                .collection("gallery")
+                .doc(photoId)
+                .get();
+              if (docSnap.exists) {
+                const data = docSnap.data();
+                title = data?.title
+                  ? `${data.title} - Vektorion`
+                  : "Momen Vektorion";
+                image = data?.url || image;
+                description =
+                  data?.description ||
+                  "Lihat keseruan momen angkatan kami di Galeri Vektorion.";
+              }
+            } catch (dbErr: any) {
+              console.error(
+                "[SEO_DB_ERR] Dev failed to fetch gallery item:",
+                dbErr.message,
+              );
+            }
+          }
+
+          template = template
+            .replace(/<title>.*?<\/title>/gi, `<title>${title}</title>`)
+            .replace(
+              /<meta property="og:title" content=".*?" \/>/gi,
+              `<meta property="og:title" content="${title}" />`,
+            )
+            .replace(
+              /<meta property="og:image" content=".*?" \/>/gi,
+              `<meta property="og:image" content="${image}" />`,
+            )
+            .replace(
+              /<meta property="og:description" content=".*?" \/>/gi,
+              `<meta property="og:description" content="${description}" />`,
+            )
+            .replace(
+              /<meta property="og:url" content=".*?" \/>/gi,
+              `<meta property="og:url" content="${shareUrl}" />`,
+            )
+            .replace(
+              /<meta name="twitter:title" content=".*?" \/>/gi,
+              `<meta name="twitter:title" content="${title}" />`,
+            )
+            .replace(
+              /<meta name="twitter:image" content=".*?" \/>/gi,
+              `<meta name="twitter:image" content="${image}" />`,
+            )
+            .replace(
+              /<meta name="twitter:description" content=".*?" \/>/gi,
+              `<meta name="twitter:description" content="${description}" />`,
+            )
+            .replace(
+              /<meta name="twitter:url" content=".*?" \/>/gi,
+              `<meta name="twitter:url" content="${shareUrl}" />`,
+            )
+            .replace(
+              /<meta name="description" content=".*?" \/>/gi,
+              `<meta name="description" content="${description}" />`,
+            );
+
           res.status(200).set({ "Content-Type": "text/html" }).end(template);
         } catch (e) {
           vite.ssrFixStacktrace(e as Error);
@@ -802,20 +891,20 @@ async function startServer() {
             `<meta property="og:url" content="${shareUrl}" />`,
           )
           .replace(
-            /<meta property="twitter:title" content=".*?" \/>/gi,
-            `<meta property="twitter:title" content="${title}" />`,
+            /<meta name="twitter:title" content=".*?" \/>/gi,
+            `<meta name="twitter:title" content="${title}" />`,
           )
           .replace(
-            /<meta property="twitter:image" content=".*?" \/>/gi,
-            `<meta property="twitter:image" content="${image}" />`,
+            /<meta name="twitter:image" content=".*?" \/>/gi,
+            `<meta name="twitter:image" content="${image}" />`,
           )
           .replace(
-            /<meta property="twitter:description" content=".*?" \/>/gi,
-            `<meta property="twitter:description" content="${description}" />`,
+            /<meta name="twitter:description" content=".*?" \/>/gi,
+            `<meta name="twitter:description" content="${description}" />`,
           )
           .replace(
-            /<meta property="twitter:url" content=".*?" \/>/gi,
-            `<meta property="twitter:url" content="${shareUrl}" />`,
+            /<meta name="twitter:url" content=".*?" \/>/gi,
+            `<meta name="twitter:url" content="${shareUrl}" />`,
           )
           .replace(
             /<meta name="description" content=".*?" \/>/gi,

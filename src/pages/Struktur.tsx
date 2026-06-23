@@ -44,6 +44,7 @@ interface MemberNodeProps {
   key?: React.Key;
   photoURL?: string;
   status?: "normal" | "green" | "red";
+  onClick?: () => void;
 }
 
 const toTitleCase = (str: string) => {
@@ -65,6 +66,7 @@ function MemberNode({
   size = "large",
   photoURL,
   status = "normal",
+  onClick,
 }: MemberNodeProps) {
   const copyToClipboard = (text: string) => {
     if (text && text !== "-") {
@@ -73,11 +75,15 @@ function MemberNode({
   };
 
   return (
-    <div className="flex flex-col items-center select-none text-center">
+    <div 
+      className={cn("flex flex-col items-center select-none text-center", onClick && "cursor-pointer group")}
+      onClick={onClick}
+    >
       {/* Bentuk bulat (rounded-full) sesuai permintaan terbaru */}
       <div
         className={cn(
           "rounded-full border border-slate-200 shadow-sm overflow-hidden mb-3 relative bg-slate-50 flex items-center justify-center transition-all",
+          onClick && "group-hover:scale-105 group-hover:border-amber-400 group-hover:shadow-lg",
           status === "red"
             ? "border-red-500 ring-4 ring-red-500/20"
             : status === "green"
@@ -158,6 +164,7 @@ export default function Struktur() {
     Record<string, "normal" | "green" | "red">
   >({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isFlowing, setIsFlowing] = useState(false);
   const [editPositions, setEditPositions] = useState<OrgPosition[]>([]);
   const [editMemberStatuses, setEditMemberStatuses] = useState<
     Record<string, "normal" | "green" | "red">
@@ -232,6 +239,20 @@ export default function Struktur() {
     (a, b) => Number(a) - Number(b),
   );
 
+  const lineVertical = cn(
+    "w-[2px] shrink-0 transition-all duration-500",
+    isFlowing
+      ? "bg-gradient-to-b from-amber-400 via-amber-200 to-amber-500 bg-[length:100%_200%] animate-flow-vertical shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+      : "bg-slate-200"
+  );
+
+  const lineHorizontal = cn(
+    "h-[2px] transition-all duration-500",
+    isFlowing
+      ? "bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-[length:200%_100%] animate-flow-horizontal shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+      : "bg-slate-200"
+  );
+
   return (
     <MaintenanceGuard menuId="struktur">
       <div className="container mx-auto px-4 py-32 space-y-24 max-w-5xl">
@@ -288,7 +309,7 @@ export default function Struktur() {
                 <div key={tier} className="flex flex-col items-center w-full">
                   {/* Central Backbone Connection from previous tier */}
                   {index > 0 && (
-                    <div className="w-[2px] h-[32px] md:h-[48px] bg-slate-200 shrink-0" />
+                    <div className={cn(lineVertical, "h-[32px] md:h-[48px]")} />
                   )}
 
                   {/* Tier Groups Container */}
@@ -302,21 +323,21 @@ export default function Struktur() {
                             <div className="flex w-full">
                               <div
                                 className={cn(
-                                  "h-[2px] w-1/2",
-                                  gIndex > 0 ? "bg-slate-200" : "",
+                                  "w-1/2",
+                                  gIndex > 0 ? lineHorizontal : "",
                                 )}
                               />
                               <div
                                 className={cn(
-                                  "h-[2px] w-1/2",
+                                  "w-1/2",
                                   gIndex < groups.length - 1
-                                    ? "bg-slate-200"
+                                    ? lineHorizontal
                                     : "",
                                 )}
                               />
                             </div>
                             {/* Vertical down to this group */}
-                            <div className="w-[2px] h-[16px] md:h-[24px] bg-slate-200 shrink-0" />
+                            <div className={cn(lineVertical, "h-[16px] md:h-[24px]")} />
                           </div>
                         )}
 
@@ -331,7 +352,7 @@ export default function Struktur() {
                                 {/* Mobile Vertical Connection (for items after the first in a group) */}
                                 {i > 0 && group.length > 1 && (
                                   <div className="md:hidden flex flex-col items-center">
-                                    <div className="w-[2px] h-[32px] bg-slate-200 shrink-0" />
+                                    <div className={cn(lineVertical, "h-[32px]")} />
                                   </div>
                                 )}
 
@@ -343,21 +364,21 @@ export default function Struktur() {
                                       <div className="flex w-full">
                                         <div
                                           className={cn(
-                                            "h-[2px] w-1/2",
-                                            i > 0 ? "bg-slate-200" : "",
+                                            "w-1/2",
+                                            i > 0 ? lineHorizontal : "",
                                           )}
                                         />
                                         <div
                                           className={cn(
-                                            "h-[2px] w-1/2",
+                                            "w-1/2",
                                             i < group.length - 1
-                                              ? "bg-slate-200"
+                                              ? lineHorizontal
                                               : "",
                                           )}
                                         />
                                       </div>
                                       {/* Vertical down to member */}
-                                      <div className="w-[2px] h-[24px] md:h-[32px] bg-slate-200 shrink-0" />
+                                      <div className={cn(lineVertical, "h-[24px] md:h-[32px]")} />
                                     </div>
                                   )}
 
@@ -379,6 +400,7 @@ export default function Struktur() {
                                           : memberStatuses[pos.nim] || "normal"
                                       }
                                       isPrimary={tier === 1}
+                                      onClick={tier === 1 ? () => setIsFlowing(!isFlowing) : undefined}
                                     />
                                   </div>
                                 </div>

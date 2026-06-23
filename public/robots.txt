@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /home
+Allow: /galeri
+Allow: /kas
+Allow: /agenda
+Allow: /struktur
+
+Sitemap: https://vektorion.vercel.app/sitemap.xml

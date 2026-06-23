@@ -23,6 +23,7 @@ import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { MaintenanceGuard } from '../components/MaintenanceGuard';
+import { motion, AnimatePresence } from 'motion/react';
 import { HomeSkeleton } from '../components/ui/Skeleton';
 
 import { OptimizedImage } from '../components/ui/OptimizedImage';
@@ -643,18 +644,24 @@ export default function Home() {
       <div className="flex flex-col min-h-screen bg-slate-50">
 {/* Hero Section - Full Page */}
 <section className="relative h-screen flex items-end justify-center pb-24 md:pb-32 overflow-hidden bg-slate-50">
-  <div 
-    key={bgConfig.heroSlideshow ? heroSlides[heroIndex] : heroBg}
-    className={cn(
-      "absolute inset-y-0 z-0",
-      isMobile ? "-left-[25%] w-[150%]" : "inset-0"
-    )}
-    style={{ 
-      backgroundImage: `url(${bgConfig.heroSlideshow ? heroSlides[heroIndex] : heroBg})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }}
-  />
+  <AnimatePresence>
+    <motion.div 
+      key={bgConfig.heroSlideshow ? heroSlides[heroIndex] : heroBg}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1.5, ease: "easeInOut" }}
+      className={cn(
+        "absolute inset-y-0 z-0",
+        isMobile ? "animate-slow-pan -left-[25%] w-[150%]" : "inset-0"
+      )}
+      style={{ 
+        backgroundImage: `url(${bgConfig.heroSlideshow ? heroSlides[heroIndex] : heroBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+    />
+  </AnimatePresence>
 
   {/* Smoother Overlay Gradients */}
   <div className="absolute inset-0 bg-slate-900/30 z-10" />
@@ -1192,14 +1199,23 @@ export default function Home() {
        {/* Footer Visual Section */}
       <section className="relative h-64 md:h-96 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <div key={bgConfig.footerSlideshow ? footerSlides[footerIndex] : footerBg} className="w-full h-full opacity-20">
-            <OptimizedImage 
-              src={bgConfig.footerSlideshow ? footerSlides[footerIndex] : footerBg} 
-              className="w-full h-full object-cover grayscale-[30%]" 
-              alt="Bottom Visual"
-              fallbackClassName="w-full h-full bg-slate-100"
-            />
-          </div>
+          <AnimatePresence>
+            <motion.div 
+              key={bgConfig.footerSlideshow ? footerSlides[footerIndex] : footerBg} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full"
+            >
+              <OptimizedImage 
+                src={bgConfig.footerSlideshow ? footerSlides[footerIndex] : footerBg} 
+                className="w-full h-full object-cover grayscale-[30%]" 
+                alt="Bottom Visual"
+                fallbackClassName="w-full h-full bg-slate-100"
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-transparent to-slate-50 z-10" />
         <div className="absolute inset-0 bg-slate-900/[0.02] z-0" />

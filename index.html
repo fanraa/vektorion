@@ -4,57 +4,96 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vektorion</title>
-    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png"
+    />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#f59e0b" />
-    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
-    
+    <link
+      rel="apple-touch-icon"
+      href="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png"
+    />
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Physics ITERA 2025 - Vektorion" />
+    <meta
+      name="description"
+      content="Portal resmi mahasiswa Fisika Institut Teknologi Sumatera (ITERA) Angkatan 2025 (Vektorion). Menyediakan layanan keuangan kas, galeri momen, agenda kegiatan, dan informasi seputar Vektorion ITERA."
+    />
+    <meta
+      name="keywords"
+      content="Vektorion, Vektorion ITERA, Fisika ITERA, Fisika Angkatan 2025, Mahasiswa Fisika ITERA"
+    />
     <meta name="author" content="Vektorion" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://vektorion.vercel.app/" />
-    <meta property="og:title" content="Vektorion" />
-    <meta property="og:description" content="Physics ITERA 2025 - Vektorion" />
-    <meta property="og:image" content="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
+    <meta property="og:title" content="Vektorion - Fisika ITERA 2025" />
+    <meta
+      property="og:description"
+      content="Portal resmi mahasiswa Fisika Institut Teknologi Sumatera (ITERA) Angkatan 2025 (Vektorion)."
+    />
+    <meta
+      property="og:image"
+      content="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png"
+    />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://vektorion.vercel.app/" />
-    <meta property="twitter:title" content="Vektorion" />
-    <meta property="twitter:description" content="Physics ITERA 2025 - Vektorion" />
-    <meta property="twitter:image" content="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://vektorion.vercel.app/" />
+    <meta name="twitter:title" content="Vektorion - Fisika ITERA 2025" />
+    <meta
+      name="twitter:description"
+      content="Portal resmi mahasiswa Fisika Institut Teknologi Sumatera (ITERA) Angkatan 2025 (Vektorion)."
+    />
+    <meta
+      name="twitter:image"
+      content="https://res.cloudinary.com/dew39kqhy/image/upload/v1778155257/BackgroundEraser_20260507_190027268_bc5p07.png"
+    />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Vektorion - Fisika ITERA 2025",
+        "url": "https://vektorion.vercel.app/",
+        "description": "Portal resmi mahasiswa Fisika Institut Teknologi Sumatera (ITERA) Angkatan 2025 (Vektorion)."
+      }
+    </script>
     <script>
       // Polyfill for libraries that expect 'process' to be defined
       window.process = window.process || {
         env: {
-          NODE_ENV: 'development'
-        }
+          NODE_ENV: "development",
+        },
       };
-      
-      if (typeof global === 'undefined') {
+
+      if (typeof global === "undefined") {
         window.global = window;
       }
 
       // Protection for readonly properties like 'fetch'
       const originalFetch = window.fetch;
       try {
-        Object.defineProperty(window, 'fetch', {
+        Object.defineProperty(window, "fetch", {
           get: () => originalFetch,
-          set: () => { console.warn('Attempted to override read-only fetch property'); },
-          configurable: true
+          set: () => {
+            console.warn("Attempted to override read-only fetch property");
+          },
+          configurable: true,
         });
       } catch (e) {
-        console.warn('Could not define property fetch:', e);
+        console.warn("Could not define property fetch:", e);
       }
-      
+
       // Global error tracker
-      window.addEventListener('error', function(event) {
-        if (event.error && event.error.name === 'SyntaxError') {
-          console.error('CRITICAL SYNTAX ERROR DETECTED:', event.error.message);
-          console.error('Stack:', event.error.stack);
+      window.addEventListener("error", function (event) {
+        if (event.error && event.error.name === "SyntaxError") {
+          console.error("CRITICAL SYNTAX ERROR DETECTED:", event.error.message);
+          console.error("Stack:", event.error.stack);
         }
       });
     </script>
@@ -63,14 +102,18 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-            .catch(err => console.error('Service Worker registration failed:', err));
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((reg) =>
+              console.log("Service Worker registered successfully:", reg.scope),
+            )
+            .catch((err) =>
+              console.error("Service Worker registration failed:", err),
+            );
         });
       }
     </script>
   </body>
 </html>
-

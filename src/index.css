@@ -83,6 +83,16 @@
   scrollbar-width: none;
 }
 
+@keyframes slow-pan {
+  0% { transform: scale(1.1) translateX(-2%); }
+  50% { transform: scale(1.1) translateX(2%); }
+  100% { transform: scale(1.1) translateX(-2%); }
+}
+
+.animate-slow-pan {
+  animation: slow-pan 25s ease-in-out infinite;
+}
+
 @keyframes pageFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -131,5 +141,23 @@
   transform: translateX(-150%) skewX(-20deg);
   pointer-events: none;
   animation: shine-once 1.5s ease-in-out forwards;
+}
+
+@keyframes flow-vertical {
+  0% { background-position: 0 -200%; }
+  100% { background-position: 0 0; }
+}
+
+@keyframes flow-horizontal {
+  0% { background-position: -200% 0; }
+  100% { background-position: 0 0; }
+}
+
+.animate-flow-vertical {
+  animation: flow-vertical 1s linear infinite;
+}
+
+.animate-flow-horizontal {
+  animation: flow-horizontal 1s linear infinite;
 }
 

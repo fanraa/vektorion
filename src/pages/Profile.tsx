@@ -49,6 +49,7 @@ import {
   deleteDoc,
   serverTimestamp,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { MEMBERS_DATA } from "../data/members";
@@ -804,14 +805,10 @@ export default function Profile() {
       setLoading(true);
       const newKeys = { ...sysSettings.apiKeys };
       delete newKeys[provider];
-      await setDoc(
-        doc(db, path),
-        {
-          apiKeys: newKeys,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
+      await updateDoc(doc(db, path), {
+        apiKeys: newKeys,
+        updatedAt: serverTimestamp(),
+      });
       setShowKeyConfirm(null);
       showToast("success", `API Key ${provider} dihapus.`);
     } catch (err) {
