@@ -161,3 +161,19 @@
   animation: flow-horizontal 1s linear infinite;
 }
 
+@keyframes border-glow-gold {
+  0%, 100% {
+    border-color: #f59e0b; /* amber-500 */
+    box-shadow: 0 0 4px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    border-color: #fbbf24; /* amber-400 */
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.8), inset 0 0 8px rgba(251, 191, 36, 0.4);
+  }
+}
+
+.animate-profile-glow {
+  animation: border-glow-gold 2s infinite ease-in-out;
+}
+
+

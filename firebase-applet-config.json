@@ -1,9 +1,9 @@
 {
-  "projectId": "proud-healer-l8gvj",
-  "appId": "1:78611132180:web:13258ebd3a97a27d6ddc01",
-  "apiKey": "AIzaSyAlfytOOnbnwxW6kmG34_GF6icMb8sa6DI",
-  "authDomain": "proud-healer-l8gvj.firebaseapp.com",
-  "storageBucket": "proud-healer-l8gvj.firebasestorage.app",
-  "messagingSenderId": "78611132180",
-  "measurementId": ""
+  "projectId": "remixed-project-id",
+  "appId": "remixed-app-id",
+  "apiKey": "remixed-api-key",
+  "authDomain": "remixed-auth-domain",
+  "storageBucket": "remixed-storage-bucket",
+  "messagingSenderId": "remixed-messaging-sender-id",
+  "measurementId": "remixed-measurement-id"
 }

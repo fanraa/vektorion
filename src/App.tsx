@@ -24,6 +24,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Aspirasi = lazy(() => import('./pages/Aspirasi'));
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
                   <Route path="/galeri" element={<ErrorBoundary><PageTransition><Galeri /></PageTransition></ErrorBoundary>} />
                   <Route path="/agenda" element={<ErrorBoundary><PageTransition><Agenda /></PageTransition></ErrorBoundary>} />
                   <Route path="/info" element={<ErrorBoundary><PageTransition><Info /></PageTransition></ErrorBoundary>} />
+                  <Route path="/aspirasi" element={<ErrorBoundary><PageTransition><Aspirasi /></PageTransition></ErrorBoundary>} />
                   <Route path="/privacy" element={<ErrorBoundary><PageTransition><Privacy /></PageTransition></ErrorBoundary>} />
                   <Route path="/terms" element={<ErrorBoundary><PageTransition><Terms /></PageTransition></ErrorBoundary>} />
                   <Route path="/login" element={<ErrorBoundary><PageTransition><Login /></PageTransition></ErrorBoundary>} />

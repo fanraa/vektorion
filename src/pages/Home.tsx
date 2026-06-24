@@ -745,7 +745,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { label: 'Kas Keuangan', desc: 'Sistem pengelolaan dana angkatan yang transparan dan akuntabel.', path: '/kas', icon: "https://cdn-icons-png.flaticon.com/128/10692/10692615.png" },
+                { label: 'Kotak Aspirasi', desc: 'Sampaikan kritik, saran, atau keluh kesah secara anonim untuk pengurus.', path: '/aspirasi', icon: "https://cdn-icons-png.flaticon.com/128/17887/17887167.png" },
                 { label: 'Galeri Momen', desc: 'Kumpulan dokumentasi perjalanan dan memori bersama angkatan.', path: '/galeri', icon: "https://cdn-icons-png.flaticon.com/128/13051/13051386.png" },
                 { label: 'Info Terkini', desc: 'Informasi dan warta terbaru seputar kegiatan akademik angkatan.', path: '/info', icon: "https://cdn-icons-png.flaticon.com/128/9479/9479228.png" },
               ].map((item, idx) => {

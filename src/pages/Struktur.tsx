@@ -45,6 +45,9 @@ interface MemberNodeProps {
   photoURL?: string;
   status?: "normal" | "green" | "red";
   onClick?: () => void;
+  isGlowActive?: boolean;
+  glowDelay?: number;
+  glowExitDelay?: number;
 }
 
 const toTitleCase = (str: string) => {
@@ -67,6 +70,8 @@ function MemberNode({
   photoURL,
   status = "normal",
   onClick,
+  isGlowActive,
+  glowDelay = 0,
 }: MemberNodeProps) {
   const copyToClipboard = (text: string) => {
     if (text && text !== "-") {
@@ -82,20 +87,30 @@ function MemberNode({
       {/* Bentuk bulat (rounded-full) sesuai permintaan terbaru */}
       <div
         className={cn(
-          "rounded-full border border-slate-200 shadow-sm overflow-hidden mb-3 relative bg-slate-50 flex items-center justify-center transition-all",
+          "rounded-full border border-slate-200 shadow-sm overflow-hidden mb-3 relative bg-slate-50 flex items-center justify-center transition-all duration-1000 ease-in-out",
           onClick && "group-hover:scale-105 group-hover:border-amber-400 group-hover:shadow-lg",
           status === "red"
             ? "border-red-500 ring-4 ring-red-500/20"
-            : status === "green"
-              ? "border-green-400 ring-4 ring-green-400/20"
-              : isPrimary
-                ? "border-amber-500 ring-4 ring-amber-500/10 bg-amber-50/50"
-                : "border-slate-200 ring-2 ring-slate-100",
+            : isGlowActive
+              ? "animate-profile-glow border-amber-400 ring-4 ring-amber-400/30"
+              : status === "green"
+                ? "border-green-400 ring-4 ring-green-400/20"
+                : isPrimary
+                  ? "border-amber-500 ring-4 ring-amber-500/10 bg-amber-50/50"
+                  : "border-slate-200 ring-2 ring-slate-100",
           size === "large"
             ? "w-24 h-24 flex-shrink-0"
             : "w-16 h-16 flex-shrink-0",
           isPrimary && "w-28 h-28",
         )}
+        style={
+          status !== "red"
+            ? {
+                animationDelay: `${glowDelay}s`,
+                transitionDelay: `${isGlowActive ? glowDelay : Math.max(0, 3.0 - glowDelay)}s`,
+              }
+            : undefined
+        }
       >
         {photoURL ? (
           <img
@@ -154,6 +169,46 @@ function MemberNode({
   );
 }
 
+interface OrgLineProps {
+  orientation: "vertical" | "horizontal";
+  active: boolean;
+  delay?: number;
+  className?: string;
+  visible?: boolean;
+}
+
+function OrgLine({ orientation, active, delay = 0, className, visible = true }: OrgLineProps) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden transition-all duration-1000 shrink-0",
+        orientation === "vertical" ? "w-[2px]" : "h-[2px]",
+        className
+      )}
+    >
+      {visible && (
+        <>
+          {/* Base line (gray) */}
+          <div className="absolute inset-0 bg-slate-200" />
+          {/* Golden Flow line overlay */}
+          <div
+            className={cn(
+              "absolute inset-0 transition-opacity duration-1000 ease-in-out",
+              orientation === "vertical"
+                ? "bg-gradient-to-b from-amber-400 via-amber-200 to-amber-500 bg-[length:100%_200%] animate-flow-vertical shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+                : "bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-[length:200%_100%] animate-flow-horizontal shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+            )}
+            style={{
+              opacity: active ? 1 : 0,
+              transitionDelay: `${active ? delay : Math.max(0, 3.0 - delay)}s`,
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Struktur() {
   const { profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -171,6 +226,15 @@ export default function Struktur() {
   >({});
   const [isSaving, setIsSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+
+  useEffect(() => {
+    // Automatically trigger the gold flow animation for 2.5 seconds on mount
+    setIsFlowing(true);
+    const timer = setTimeout(() => {
+      setIsFlowing(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,20 +303,6 @@ export default function Struktur() {
     (a, b) => Number(a) - Number(b),
   );
 
-  const lineVertical = cn(
-    "w-[2px] shrink-0 transition-all duration-500",
-    isFlowing
-      ? "bg-gradient-to-b from-amber-400 via-amber-200 to-amber-500 bg-[length:100%_200%] animate-flow-vertical shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-      : "bg-slate-200"
-  );
-
-  const lineHorizontal = cn(
-    "h-[2px] transition-all duration-500",
-    isFlowing
-      ? "bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-[length:200%_100%] animate-flow-horizontal shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-      : "bg-slate-200"
-  );
-
   return (
     <MaintenanceGuard menuId="struktur">
       <div className="container mx-auto px-4 py-32 space-y-24 max-w-5xl">
@@ -309,7 +359,12 @@ export default function Struktur() {
                 <div key={tier} className="flex flex-col items-center w-full">
                   {/* Central Backbone Connection from previous tier */}
                   {index > 0 && (
-                    <div className={cn(lineVertical, "h-[32px] md:h-[48px]")} />
+                    <OrgLine
+                      orientation="vertical"
+                      active={isFlowing}
+                      delay={(index - 0.5) * 0.4}
+                      className="h-[32px] md:h-[48px]"
+                    />
                   )}
 
                   {/* Tier Groups Container */}
@@ -321,23 +376,28 @@ export default function Struktur() {
                           <div className="flex flex-col items-center w-full">
                             {/* Horizontal Line Fragments */}
                             <div className="flex w-full">
-                              <div
-                                className={cn(
-                                  "w-1/2",
-                                  gIndex > 0 ? lineHorizontal : "",
-                                )}
+                              <OrgLine
+                                orientation="horizontal"
+                                active={isFlowing}
+                                visible={gIndex > 0}
+                                delay={index * 0.4}
+                                className="w-1/2"
                               />
-                              <div
-                                className={cn(
-                                  "w-1/2",
-                                  gIndex < groups.length - 1
-                                    ? lineHorizontal
-                                    : "",
-                                )}
+                              <OrgLine
+                                orientation="horizontal"
+                                active={isFlowing}
+                                visible={gIndex < groups.length - 1}
+                                delay={index * 0.4}
+                                className="w-1/2"
                               />
                             </div>
                             {/* Vertical down to this group */}
-                            <div className={cn(lineVertical, "h-[16px] md:h-[24px]")} />
+                            <OrgLine
+                              orientation="vertical"
+                              active={isFlowing}
+                              delay={(index + 0.2) * 0.4}
+                              className="h-[16px] md:h-[24px]"
+                            />
                           </div>
                         )}
 
@@ -352,7 +412,12 @@ export default function Struktur() {
                                 {/* Mobile Vertical Connection (for items after the first in a group) */}
                                 {i > 0 && group.length > 1 && (
                                   <div className="md:hidden flex flex-col items-center">
-                                    <div className={cn(lineVertical, "h-[32px]")} />
+                                    <OrgLine
+                                      orientation="vertical"
+                                      active={isFlowing}
+                                      delay={index * 0.4}
+                                      className="h-[32px]"
+                                    />
                                   </div>
                                 )}
 
@@ -362,23 +427,28 @@ export default function Struktur() {
                                     <div className="hidden md:flex flex-col items-center w-full">
                                       {/* Horizontal Line Fragments */}
                                       <div className="flex w-full">
-                                        <div
-                                          className={cn(
-                                            "w-1/2",
-                                            i > 0 ? lineHorizontal : "",
-                                          )}
+                                        <OrgLine
+                                          orientation="horizontal"
+                                          active={isFlowing}
+                                          visible={i > 0}
+                                          delay={(index + 0.4) * 0.4}
+                                          className="w-1/2"
                                         />
-                                        <div
-                                          className={cn(
-                                            "w-1/2",
-                                            i < group.length - 1
-                                              ? lineHorizontal
-                                              : "",
-                                          )}
+                                        <OrgLine
+                                          orientation="horizontal"
+                                          active={isFlowing}
+                                          visible={i < group.length - 1}
+                                          delay={(index + 0.4) * 0.4}
+                                          className="w-1/2"
                                         />
                                       </div>
                                       {/* Vertical down to member */}
-                                      <div className={cn(lineVertical, "h-[24px] md:h-[32px]")} />
+                                      <OrgLine
+                                        orientation="vertical"
+                                        active={isFlowing}
+                                        delay={(index + 0.6) * 0.4}
+                                        className="h-[24px] md:h-[32px]"
+                                      />
                                     </div>
                                   )}
 
@@ -401,6 +471,8 @@ export default function Struktur() {
                                       }
                                       isPrimary={tier === 1}
                                       onClick={tier === 1 ? () => setIsFlowing(!isFlowing) : undefined}
+                                      isGlowActive={isFlowing}
+                                      glowDelay={(Number(tier) - 1) * 0.5}
                                     />
                                   </div>
                                 </div>
@@ -457,6 +529,8 @@ export default function Struktur() {
                         ? "red"
                         : memberStatuses[member.nim || ""] || "normal"
                     }
+                    isGlowActive={isFlowing}
+                    glowDelay={1.2 + (idx % 12) * 0.15}
                   />
                 </div>
               ))}

@@ -561,6 +561,32 @@ export default function Layout({ children }: LayoutProps) {
                   </NavLink>
                 ))}
 
+                <NavLink
+                  to="/aspirasi"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-md text-[10px] font-bold transition-all tracking-wide",
+                      isActive
+                        ? "bg-amber-50 text-amber-500"
+                        : "text-slate-600 hover:text-amber-500 hover:bg-slate-50",
+                    )
+                  }
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/128/17887/17887167.png"
+                    alt="Kotak Aspirasi"
+                    className="w-4 h-4 object-contain"
+                    style={{
+                      filter:
+                        location.pathname === "/aspirasi"
+                          ? "brightness(0) saturate(100%) invert(70%) sepia(87%) saturate(583%) hue-rotate(352deg) brightness(98%) contrast(98%)"
+                          : "grayscale(1) opacity(0.4)",
+                    }}
+                  />
+                  Kotak Aspirasi
+                </NavLink>
+
                 <div className="pt-2 mt-1 border-t border-slate-100 px-1 pb-2">
                   {user ? (
                     <div className="flex items-center gap-1.5">

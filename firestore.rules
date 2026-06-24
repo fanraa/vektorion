@@ -269,5 +269,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    match /aspirasi/{docId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
   }
 }

@@ -69,3 +69,6 @@ File ini berisi aturan desain dan struktur permanen untuk Vektorion. AI harus me
 - **Konsistensi Siklus Render (No Unmount-TearDown)**: Saat terjadi transisi loading, hindari unmounting dini pada container yang memiliki hooks seperti `<MaintenanceGuard>`. Pola yang direkomendasikan adalah membungkus seluruh elemen kembalian (termasuk skeleton/loading state) di dalam pelindung tersebut agar bagan dependensi React (`useContext`, `useState` internal) tetap terdaftar secara lestari.
 - **Pre-Bundling Dependensi Inti**: Gunakan konfigurasi `optimizeDeps.include` di `vite.config.ts` untuk mem-bundle library inti seperti `react`, `react-dom`, dan `motion/react` ke dalam format ESM tunggal yang konsisten agar menghindari masalah runtime dual-module loader.
 
+
+
+
